@@ -8,18 +8,18 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import javafx.scene.control.cell.PropertyValueFactory;
 
-
 public class Main extends Application {
-    private ArrayList<Expense> expenses = new ArrayList<>();  // List to store expenses
+
+    private ArrayList<Expense> expenses = new ArrayList<>();
 
     public static void main(String[] args) {
-        launch(args);  // Starts JavaFX application
+        launch(args);
     }
 
     @Override
     public void start(Stage stage) {
 
-        // Title
+        // ===== Title =====
         Label title = new Label("Expense Tracker");
         title.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
 
@@ -38,8 +38,23 @@ public class Main extends Application {
 
         table.getColumns().addAll(amountCol, categoryCol, dateCol);
 
-        // ===== Bottom Total =====
-        Label totalLabel = new Label("Total Spent: $0.00");
+        // ===== Total Labels =====
+        Label totalLabel = new Label("Total Spent: $0");
+
+        Label foodTotal = new Label("Food: $0");
+        Label transportTotal = new Label("Transport: $0");
+        Label shoppingTotal = new Label("Shopping: $0");
+        Label billsTotal = new Label("Bills: $0");
+        Label otherTotal = new Label("Other: $0");
+
+        VBox categoryTotals = new VBox(8,
+                foodTotal,
+                transportTotal,
+                shoppingTotal,
+                billsTotal,
+                otherTotal
+        );
+        categoryTotals.setPadding(new Insets(10));
 
         // ===== Expense Form =====
         TextField amountField = new TextField();
@@ -53,7 +68,6 @@ public class Main extends Application {
 
         Button addButton = new Button("Add Expense");
 
-        // Button action
         addButton.setOnAction(e -> {
             double amount = Double.parseDouble(amountField.getText());
             String category = categoryBox.getValue();
@@ -64,10 +78,26 @@ public class Main extends Application {
             table.getItems().add(newExpense);
 
             double total = 0;
+            double food = 0, transport = 0, shopping = 0, bills = 0, other = 0;
+
             for (Expense exp : expenses) {
                 total += exp.getAmount();
+
+                switch (exp.getCategory()) {
+                    case "Food" -> food += exp.getAmount();
+                    case "Transport" -> transport += exp.getAmount();
+                    case "Shopping" -> shopping += exp.getAmount();
+                    case "Bills" -> bills += exp.getAmount();
+                    case "Other" -> other += exp.getAmount();
+                }
             }
+
             totalLabel.setText("Total Spent: $" + total);
+            foodTotal.setText("Food: $" + food);
+            transportTotal.setText("Transport: $" + transport);
+            shoppingTotal.setText("Shopping: $" + shopping);
+            billsTotal.setText("Bills: $" + bills);
+            otherTotal.setText("Other: $" + other);
 
             amountField.clear();
             categoryBox.setValue(null);
@@ -83,13 +113,13 @@ public class Main extends Application {
         BorderPane.setAlignment(title, Pos.CENTER);
         root.setLeft(form);
         root.setCenter(table);
+        root.setRight(categoryTotals);
         root.setBottom(totalLabel);
         BorderPane.setMargin(totalLabel, new Insets(10));
 
-        Scene scene = new Scene(root, 700, 400);
+        Scene scene = new Scene(root, 800, 400);
         stage.setTitle("Expense Tracker");
         stage.setScene(scene);
         stage.show();
     }
-
 }
