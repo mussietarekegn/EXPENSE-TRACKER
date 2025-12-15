@@ -56,6 +56,23 @@ public class Main extends Application {
         );
         categoryTotals.setPadding(new Insets(10));
 
+        // ===== Monthly Summary =====
+        Label monthlyTitle = new Label("Monthly Summary");
+        monthlyTitle.setStyle("-fx-font-weight: bold;");
+
+        ComboBox<String> monthBox = new ComboBox<>();
+        monthBox.getItems().addAll(
+                "JANUARY", "FEBRUARY", "MARCH", "APRIL",
+                "MAY", "JUNE", "JULY", "AUGUST",
+                "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"
+        );
+        monthBox.setPromptText("Select Month");
+
+        Label monthlyTotal = new Label("Monthly Total: $0");
+
+        VBox monthlyBox = new VBox(8, monthlyTitle, monthBox, monthlyTotal);
+        monthlyBox.setPadding(new Insets(10));
+
         // ===== Expense Form =====
         TextField amountField = new TextField();
         amountField.setPromptText("Amount");
@@ -99,6 +116,17 @@ public class Main extends Application {
             billsTotal.setText("Bills: $" + bills);
             otherTotal.setText("Other: $" + other);
 
+            // ===== Monthly calculation =====
+            if (monthBox.getValue() != null) {
+                double monthSum = 0;
+                for (Expense exp : expenses) {
+                    if (exp.getDate().getMonth().toString().equals(monthBox.getValue())) {
+                        monthSum += exp.getAmount();
+                    }
+                }
+                monthlyTotal.setText("Monthly Total: $" + monthSum);
+            }
+
             amountField.clear();
             categoryBox.setValue(null);
             datePicker.setValue(null);
@@ -107,17 +135,20 @@ public class Main extends Application {
         VBox form = new VBox(10, amountField, categoryBox, datePicker, addButton);
         form.setPadding(new Insets(10));
 
+        // ===== Right Panel =====
+        VBox rightPanel = new VBox(20, categoryTotals, monthlyBox);
+
         // ===== Layout =====
         BorderPane root = new BorderPane();
         root.setTop(title);
         BorderPane.setAlignment(title, Pos.CENTER);
         root.setLeft(form);
         root.setCenter(table);
-        root.setRight(categoryTotals);
+        root.setRight(rightPanel);
         root.setBottom(totalLabel);
         BorderPane.setMargin(totalLabel, new Insets(10));
 
-        Scene scene = new Scene(root, 800, 400);
+        Scene scene = new Scene(root, 900, 420);
         stage.setTitle("Expense Tracker");
         stage.setScene(scene);
         stage.show();
