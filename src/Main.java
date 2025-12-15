@@ -7,6 +7,10 @@ import javafx.geometry.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.chart.BarChart;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 
 public class Main extends Application {
 
@@ -38,7 +42,7 @@ public class Main extends Application {
 
         table.getColumns().addAll(amountCol, categoryCol, dateCol);
 
-        // ===== Total Labels =====
+        // ===== Total & Category Labels =====
         Label totalLabel = new Label("Total Spent: $0");
 
         Label foodTotal = new Label("Food: $0");
@@ -73,6 +77,21 @@ public class Main extends Application {
         VBox monthlyBox = new VBox(8, monthlyTitle, monthBox, monthlyTotal);
         monthlyBox.setPadding(new Insets(10));
 
+        // ===== Bar Chart =====
+        CategoryAxis xAxis = new CategoryAxis();
+        xAxis.setLabel("Category");
+
+        NumberAxis yAxis = new NumberAxis();
+        yAxis.setLabel("Amount");
+
+        BarChart<String, Number> barChart = new BarChart<>(xAxis, yAxis);
+        barChart.setTitle("Category-wise Expenses");
+
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        series.setName("Expenses");
+        barChart.getData().add(series);
+        barChart.setPrefHeight(250);
+
         // ===== Expense Form =====
         TextField amountField = new TextField();
         amountField.setPromptText("Amount");
@@ -94,8 +113,10 @@ public class Main extends Application {
             expenses.add(newExpense);
             table.getItems().add(newExpense);
 
+            // ===== Recalculate totals =====
             double total = 0;
             double food = 0, transport = 0, shopping = 0, bills = 0, other = 0;
+            double monthSum = 0;
 
             for (Expense exp : expenses) {
                 total += exp.getAmount();
@@ -107,6 +128,11 @@ public class Main extends Application {
                     case "Bills" -> bills += exp.getAmount();
                     case "Other" -> other += exp.getAmount();
                 }
+
+                if (monthBox.getValue() != null &&
+                        exp.getDate().getMonth().toString().equals(monthBox.getValue())) {
+                    monthSum += exp.getAmount();
+                }
             }
 
             totalLabel.setText("Total Spent: $" + total);
@@ -115,17 +141,15 @@ public class Main extends Application {
             shoppingTotal.setText("Shopping: $" + shopping);
             billsTotal.setText("Bills: $" + bills);
             otherTotal.setText("Other: $" + other);
+            monthlyTotal.setText("Monthly Total: $" + monthSum);
 
-            // ===== Monthly calculation =====
-            if (monthBox.getValue() != null) {
-                double monthSum = 0;
-                for (Expense exp : expenses) {
-                    if (exp.getDate().getMonth().toString().equals(monthBox.getValue())) {
-                        monthSum += exp.getAmount();
-                    }
-                }
-                monthlyTotal.setText("Monthly Total: $" + monthSum);
-            }
+            // ===== Update Bar Chart =====
+            series.getData().clear();
+            series.getData().add(new XYChart.Data<>("Food", food));
+            series.getData().add(new XYChart.Data<>("Transport", transport));
+            series.getData().add(new XYChart.Data<>("Shopping", shopping));
+            series.getData().add(new XYChart.Data<>("Bills", bills));
+            series.getData().add(new XYChart.Data<>("Other", other));
 
             amountField.clear();
             categoryBox.setValue(null);
@@ -145,10 +169,10 @@ public class Main extends Application {
         root.setLeft(form);
         root.setCenter(table);
         root.setRight(rightPanel);
-        root.setBottom(totalLabel);
+        root.setBottom(new VBox(10, totalLabel, barChart));
         BorderPane.setMargin(totalLabel, new Insets(10));
 
-        Scene scene = new Scene(root, 900, 420);
+        Scene scene = new Scene(root, 950, 500);
         stage.setTitle("Expense Tracker");
         stage.setScene(scene);
         stage.show();
