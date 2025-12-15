@@ -15,7 +15,7 @@ import javafx.util.Callback;
 
 public class Main extends Application {
 
-    private ArrayList<Expense> expenses = new ArrayList<>();
+    private ArrayList<Expense> expenses = new ArrayList<>(); // store expenses
 
     public static void main(String[] args) {
         launch(args);
@@ -24,6 +24,9 @@ public class Main extends Application {
     @Override
     public void start(Stage stage) {
 
+        // Load expenses from file
+        expenses = ExpenseStorage.loadExpenses();
+
         // ===== Title =====
         Label title = new Label("Expense Tracker");
         title.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
@@ -31,6 +34,7 @@ public class Main extends Application {
         // ===== Expense Table =====
         TableView<Expense> table = new TableView<>();
         table.setPlaceholder(new Label("No expenses yet"));
+        table.getItems().addAll(expenses);
 
         TableColumn<Expense, Double> amountCol = new TableColumn<>("Amount");
         amountCol.setCellValueFactory(new PropertyValueFactory<>("amount"));
@@ -84,9 +88,7 @@ public class Main extends Application {
 
         // ===== Helper method to recalc totals =====
         Runnable recalcTotals = () -> {
-            double total = 0;
-            double food = 0, transport = 0, shopping = 0, bills = 0, other = 0;
-            double monthSum = 0;
+            double total = 0, food = 0, transport = 0, shopping = 0, bills = 0, other = 0, monthSum = 0;
 
             for (Expense exp : expenses) {
                 total += exp.getAmount();
@@ -121,29 +123,26 @@ public class Main extends Application {
 
         // ===== Delete Column =====
         TableColumn<Expense, Void> deleteCol = new TableColumn<>("Action");
-        Callback<TableColumn<Expense, Void>, TableCell<Expense, Void>> cellFactory = param -> {
-            final TableCell<Expense, Void> cell = new TableCell<>() {
-                private final Button btn = new Button("Delete");
+        Callback<TableColumn<Expense, Void>, TableCell<Expense, Void>> cellFactory = param -> new TableCell<>() {
+            private final Button btn = new Button("Delete");
 
-                {
-                    btn.setOnAction(event -> {
-                        Expense exp = getTableView().getItems().get(getIndex());
-                        expenses.remove(exp);
-                        table.getItems().remove(exp);
-                        recalcTotals.run(); // ✅ Works now
-                    });
-                }
+            {
+                btn.setOnAction(event -> {
+                    Expense exp = getTableView().getItems().get(getIndex());
+                    expenses.remove(exp);
+                    table.getItems().remove(exp);
+                    recalcTotals.run();
+                    ExpenseStorage.saveExpenses(expenses); // update file
+                });
+            }
 
-                @Override
-                public void updateItem(Void item, boolean empty) {
-                    super.updateItem(item, empty);
-                    setGraphic(empty ? null : btn);
-                }
-            };
-            return cell;
+            @Override
+            public void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                setGraphic(empty ? null : btn);
+            }
         };
         deleteCol.setCellFactory(cellFactory);
-
         table.getColumns().addAll(amountCol, categoryCol, dateCol, deleteCol);
 
         // ===== Expense Form =====
@@ -167,6 +166,7 @@ public class Main extends Application {
             table.getItems().add(newExpense);
 
             recalcTotals.run();
+            ExpenseStorage.saveExpenses(expenses); // save to file
 
             amountField.clear();
             categoryBox.setValue(null);
@@ -193,5 +193,8 @@ public class Main extends Application {
         stage.setTitle("Expense Tracker");
         stage.setScene(scene);
         stage.show();
+
+        // Initial calculation
+        recalcTotals.run();
     }
 }
