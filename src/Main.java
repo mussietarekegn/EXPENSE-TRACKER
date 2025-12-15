@@ -4,9 +4,12 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javafx.geometry.*;
-
+import java.time.LocalDate;
+import java.util.ArrayList;
 
 public class Main extends Application {
+    private ArrayList<Expense> expenses = new ArrayList<>();  // List to store expenses
+
     public static void main(String[] args) {
         launch(args);  // Starts JavaFX application
     }
@@ -29,6 +32,18 @@ public class Main extends Application {
         DatePicker datePicker = new DatePicker();
 
         Button addButton = new Button("Add Expense");
+
+        // Button action to add expense
+        addButton.setOnAction(e -> {
+            double amount = Double.parseDouble(amountField.getText());
+            String category = categoryBox.getValue();
+            LocalDate date = datePicker.getValue();
+
+            // Create an Expense object and add it to the list
+            Expense newExpense = new Expense(amount, category, date);
+            expenses.add(newExpense);
+            System.out.println("Added: " + newExpense);
+        });
 
         VBox form = new VBox(10, amountField, categoryBox, datePicker, addButton);
         form.setPadding(new Insets(10));
@@ -55,5 +70,4 @@ public class Main extends Application {
         stage.setScene(scene);
         stage.show();
     }
-
 }
